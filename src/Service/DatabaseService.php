@@ -34,14 +34,14 @@ interface DatabaseService
      * @param array  $attributes
      * @return Model
      */
-    public function create(string $model, array $attributes): Model
+    public function create(string $model, array $attributes): Model;
 
     /**
      * @param string $model
      * @param array  $attributes
      * @return Model
      */
-    public function createAndSave(string $model, array $attributes): Model
+    public function createAndSave(string $model, array $attributes): Model;
 
     // TODO
     // public function findDuplicatedFields($model, $instance, $fields):

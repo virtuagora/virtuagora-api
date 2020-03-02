@@ -62,7 +62,6 @@ class Release000Migration
             $t->engine = 'InnoDB';
             $t->string('id')->primary();
             $t->string('name');
-            $t->json('localized_fields_schema');
             $t->json('extra_fields_schema');
             $t->string('parent_id')->nullable();
             $t->foreign('parent_id')->references('id')->on('place_types')->onDelete('set null');
@@ -72,8 +71,10 @@ class Release000Migration
             $t->engine = 'InnoDB';
             $t->increments('id');
             $t->string('code');
+            $t->string('name'); // T
             $t->integer('size')->unsigned()->default(0);
             $t->json('extra_fields')->nullable();
+            $t->string('trace')->nullable(); // T
             $t->integer('parent_id')->unsigned()->nullable();
             $t->foreign('parent_id')->references('id')->on('places')->onDelete('cascade');
             $t->integer('space_id')->unsigned()->nullable();
@@ -82,22 +83,12 @@ class Release000Migration
             $t->foreign('place_type_id')->references('id')->on('place_types')->onDelete('restrict');
             $t->timestamps();
         });
-        $this->schema->create('places_translations', function (Blueprint $t) {
-            $t->engine = 'InnoDB';
-            $t->increments('id');
-            $t->integer('place_id')->unsigned();
-            $t->string('locale')->index();
-            $t->string('name');
-            $t->json('localized_fields')->nullable();
-            $t->string('trace')->nullable();
-            $t->unique(['place_id', 'locale']);
-            $t->foreign('place_id')->references('id')->on('places')->onDelete('cascade');
-        });
         $this->schema->create('roles', function (Blueprint $t) {
             $t->engine = 'InnoDB';
             $t->string('id')->primary();
             $t->string('name')->unique();
-            $t->boolean('show_badge');
+            $t->text('description')->nullable();
+            $t->boolean('show_badge')->default(false);
             $t->string('icon')->nullable();
             $t->json('extra_fields')->nullable();
             $t->timestamps();
@@ -115,9 +106,9 @@ class Release000Migration
         $this->schema->create('agent_types', function (Blueprint $t) {
             $t->engine = 'InnoDB';
             $t->string('id')->primary();
+            $t->text('description')->nullable();
             $t->boolean('individual'); // individual agents or collection?
             $t->json('allowed_relations')->nullable(); // list of allowed relations for every group
-            $t->json('localized_fields_schema');
             $t->json('extra_fields_schema');
             $t->json('hidden_fields_schema');
             $t->string('role_id')->nullable(); // role for the agents of this type
@@ -128,13 +119,15 @@ class Release000Migration
             $t->engine = 'InnoDB';
             $t->increments('id');
             $t->string('display_name');
-            $t->string('avatar_hash');
+            $t->text('description')->nullable(); // T
+            $t->string('avatar');
             $t->double('score')->default(0);
             $t->boolean('banned')->default(false);
             $t->string('locale')->default('en');
             $t->json('extra_fields')->nullable();
             $t->json('hidden_fields')->nullable();
             $t->json('pictures')->nullable();
+            $t->string('trace')->nullable(); // T
             $t->integer('person_id')->unsigned()->nullable();
             $t->foreign('person_id')->references('id')->on('people')->onDelete('cascade');
             $t->integer('place_id')->unsigned()->nullable();
@@ -143,31 +136,6 @@ class Release000Migration
             $t->foreign('agent_type_id')->references('id')->on('agent_types')->onDelete('restrict');
             $t->timestamps();
         });
-        $this->schema->create('agents_translations', function (Blueprint $t) {
-            $t->engine = 'InnoDB';
-            $t->integer('agent_id')->unsigned();
-            $t->string('locale')->index();
-            $t->text('description')->nullable();
-            $t->json('localized_fields')->nullable();
-            $t->string('trace')->nullable();
-            $t->unique(['agent_id', 'locale']);
-            $t->foreign('agent_id')->references('id')->on('agents')->onDelete('cascade');
-        });
-        // $this->schema->create('credentials', function (Blueprint $t) {
-        //     $t->engine = 'InnoDB';
-        //     $t->increments('id');
-        //     $t->string('username')->unique();
-        //     $t->string('password')->nullable();
-        //     $t->boolean('banned')->default(false);
-        //     $t->string('email')->nullable();
-        //     $t->string('facebook')->nullable();
-        //     $t->string('phone')->nullable();
-        //     $t->integer('agent_id')->unsigned();
-        //     $t->foreign('agent_id')->references('id')->on('agents')->onDelete('cascade');
-        //     $t->index('email');
-        //     $t->index('facebook');
-        //     $t->index('phone');
-        // });
         $this->schema->create('account_types', function (Blueprint $t) {
             $t->engine = 'InnoDB';
             $t->string('id')->primary();
@@ -190,7 +158,6 @@ class Release000Migration
             $t->timestamps();
             $t->index('username');
         });
-
         $this->schema->create('agent_agent', function (Blueprint $t) {
             $t->engine = 'InnoDB';
             $t->increments('id');
@@ -214,12 +181,10 @@ class Release000Migration
             $t->string('token')->unique();
             $t->string('type');
             $t->json('data')->nullable();
-            $t->string('finder')->nullable();
             $t->integer('agent_id')->unsigned()->nullable();
             $t->foreign('agent_id')->references('id')->on('agents')->onDelete('cascade');
             $t->timestamp('expires_on')->nullable();
             $t->timestamps();
-            $t->index('finder');
         });
         $this->schema->create('node_types', function (Blueprint $t) {
             $t->engine = 'InnoDB';
@@ -228,7 +193,6 @@ class Release000Migration
             $t->text('description');
             $t->json('node_relations')->nullable();
             $t->json('agent_relations')->nullable();
-            $t->json('localized_fields_schema');
             $t->json('extra_fields_schema');
             $t->json('hidden_fields_schema');
             $t->timestamps();
@@ -236,11 +200,14 @@ class Release000Migration
         $this->schema->create('nodes', function (Blueprint $t) {
             $t->engine = 'InnoDB';
             $t->increments('id');
+            $t->string('title'); // T
+            $t->text('content')->nullable(); // T
             $t->double('score')->default(0);
             $t->dateTime('close_date')->nullable();
             $t->boolean('unlisted')->default(false);
             $t->json('extra_fields')->nullable();
             $t->json('hidden_fields')->nullable();
+            $t->string('trace')->nullable(); // T
             $t->integer('maker_id')->unsigned();
             $t->foreign('maker_id')->references('id')->on('agents')->onDelete('cascade');
             $t->integer('space_id')->unsigned()->nullable();
@@ -250,17 +217,6 @@ class Release000Migration
             $t->string('node_type_id');
             $t->foreign('node_type_id')->references('id')->on('node_types')->onDelete('restrict');
             $t->timestamps();
-        });
-        $this->schema->create('nodes_translations', function (Blueprint $t) {
-            $t->engine = 'InnoDB';
-            $t->integer('node_id')->unsigned();
-            $t->string('locale')->index();
-            $t->string('title');
-            $t->text('content')->nullable();
-            $t->json('localized_fields')->nullable();
-            $t->string('trace')->nullable();
-            $t->unique(['node_id', 'locale']);
-            $t->foreign('node_id')->references('id')->on('nodes')->onDelete('cascade');
         });
         $this->schema->create('node_node', function (Blueprint $t) {
             $t->engine = 'InnoDB';
@@ -310,7 +266,6 @@ class Release000Migration
             $t->string('id')->primary();;
             $t->string('name');
             $t->text('description');
-            $t->json('localized_fields_schema');
             $t->json('extra_fields_schema');
             $t->json('rules');
             $t->timestamps();
@@ -318,21 +273,13 @@ class Release000Migration
         $this->schema->create('terms', function (Blueprint $t) {
             $t->engine = 'InnoDB';
             $t->increments('id');
+            $t->string('name'); // T
             $t->integer('size')->unsigned()->default(0);
             $t->json('extra_fields')->nullable();
+            $t->string('trace')->nullable(); // T
             $t->string('term_type_id');
             $t->foreign('term_type_id')->references('id')->on('term_types')->onDelete('cascade');
             $t->timestamps();
-        });
-        $this->schema->create('terms_translations', function (Blueprint $t) {
-            $t->engine = 'InnoDB';
-            $t->integer('term_id')->unsigned();
-            $t->string('locale')->index();
-            $t->string('name');
-            $t->json('localized_fields')->nullable();
-            $t->string('trace')->nullable();
-            $t->unique(['term_id', 'locale']);
-            $t->foreign('term_id')->references('id')->on('terms')->onDelete('cascade');
         });
         $this->schema->create('term_object', function (Blueprint $t) {
             $t->engine = 'InnoDB';
@@ -351,8 +298,8 @@ class Release000Migration
             $t->string('group');
             $t->string('rule'); // anyOf or allOf
             $t->string('allowed_roles');
-            $t->string('first_allowed_relations');
-            $t->string('second_allowed_relations');
+            $t->string('allowed_first_targets');
+            $t->string('allowed_second_targets');
             $t->timestamps();
         });
         $this->schema->create('logs', function (Blueprint $t) {
@@ -360,6 +307,7 @@ class Release000Migration
             $t->increments('id');
             $t->string('action_id');
             $t->integer('agent_id')->unsigned()->nullable();
+            $t->integer('proxy_id')->unsigned()->nullable();
             $t->string('first_target_type');
             $t->integer('first_target_id')->unsigned();
             $t->string('second_target_type')->nullable();
@@ -408,142 +356,38 @@ class Release000Migration
                 'name' => 'Admnistrator',
                 'show_badge' => true,
             ], [
+                'id' => 'Mod',
+                'name' => 'Moderator',
+                'show_badge' => true,
+            ], [
                 'id' => 'StaffGroup',
                 'name' => 'Staff group',
                 'show_badge' => false,
-            ], [
-                'id' => 'InitiativeGroup',
-                'name' => 'Initiative group',
-                'show_badge' => false,
             ],
         ]);
 
-        $this->db->createAndSave('App:GroupType', [
-            'id' => 'Staff',
-            'name' => 'Staff',
-            'description' => 'Administration teams',
-            'role_id' => 'StaffGroup',
-            'public_schema' => [
+        $this->db->createAndSave('App:AgentType', [
+            'id' => 'User',
+            'individual' => true,
+            'role_id' => 'User',
+            'extra_fields_schema' => [
                 'type' => 'null',
             ],
-            'private_schema' => [
+            'hidden_fields_schema' => [
                 'type' => 'null',
-            ],
-        ]);
-        $this->db->createAndSave('App:GroupType', [
-            'id' => 'Initiative',
-            'name' => 'Initiative',
-            'description' => 'Youth initiatives',
-            'role_id' => 'InitiativeGroup',
-            'allowed_relations' => [
-                'owner' => [
-                    'name' => 'Owner',
-                ],
-            ],
-            'public_schema' => [
-                'type' => 'object',
-                'properties' => [
-                    'founding_year' => [
-                        'type' => 'integer',
-                        'minimum' => 1,
-                        'maximum' => 2020,
-                    ],
-                    'goals' => [
-                        'type' => 'string',
-                        'minLength' => 1,
-                        'maxLength' => 750,
-                    ],
-                    'website' => [
-                        'type' => 'string',
-                        'minLength' => 10,
-                        'maxLength' => 100,
-                    ],
-                    'facebook' => [
-                        'type' => 'string',
-                        'minLength' => 10,
-                        'maxLength' => 100,
-                    ],
-                    'twitter' => [
-                        'type' => 'string',
-                        'minLength' => 10,
-                        'maxLength' => 100,
-                    ],
-                    'other_network' => [
-                        'type' => 'string',
-                        'minLength' => 10,
-                        'maxLength' => 100,
-                    ],
-                    'role_of_youth' => [
-                        'type' => 'string',
-                        'enum' => [
-                            'targetAudience', 'leadership', 'membership'
-                        ],
-                    ],
-                    'interested_in_participate' => [
-                        'type' => 'boolean',
-                        'default' => false,
-                    ],
-                ],
-                'required' => [
-                    'founding_year', 'goals', 'role_of_youth',
-                ],
-                'additionalProperties' => false,
-            ],
-            'private_schema' => [
-                'type' => 'object',
-                'properties' => [
-                    'contact_email' => [
-                        'type' => 'string',
-                        'minLength' => 5,
-                        'maxLength' => 100,
-                        'format' => 'email',
-                    ],
-                    'contact_phone' => [
-                        'type' => 'string',
-                        'minLength' => 5,
-                        'maxLength' => 20,
-                    ],
-                ],
-                'required' => [
-                    'contact_email',
-                ],
-                'additionalProperties' => false,
             ],
         ]);
 
-        $this->db->createAndSave('App:Taxonomy', [
-            'id' => 'topics',
-            'name' => 'Topics',
-            'description' => 'ICT and Internet related topics which are of interest or concern',
+        $this->db->createAndSave('App:TermType', [
+            'id' => 'category',
+            'name' => 'Categories',
+            'description' => 'Generic categories',
             'rules' => [
                 'habtm' => true, // HasAndBelongsToMany
             ],
-            'schema' => [
+            'extra_fields_schema' => [
                 'type' => 'null',
             ],
-        ]);
-
-        $this->db->table('terms')->insert([
-            ['name' => 'Access for people with disabilities', 'trace' => 'Accessforpeoplewithdisabilities', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Access to Information', 'trace' => 'AccesstoInformation', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Cybersecurity and Data Protection', 'trace' => 'CybersecurityandDataProtection', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'LGBT+ Community', 'trace' => 'LGBTCommunity', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Entrepreneurship', 'trace' => 'Entrepreneurship', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Arts and Culture', 'trace' => 'ArtsandCulture', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Democracy', 'trace' => 'Democracy', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Human Rights', 'trace' => 'HumanRights', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Gender Equality', 'trace' => 'GenderEquality', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Social Inclusion and Inequality', 'trace' => 'SocialInclusionandInequality', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Technological Innovation', 'trace' => 'TechnologicalInnovation', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Internet of Things', 'trace' => 'InternetofThings', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Freedom of Expression', 'trace' => 'FreedomofExpression', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Religious Freedom', 'trace' => 'ReligiousFreedom', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Fight Against Racism', 'trace' => 'FightAgainstRacism', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Net Neutrality', 'trace' => 'NetNeutrality', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Academic Research', 'trace' => 'AcademicResearch', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Community Networks', 'trace' => 'CommunityNetworks', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Health', 'trace' => 'Health', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
-            ['name' => 'Transparency and Government Accountability', 'trace' => 'TransparencyandGovernmentAccountability', 'taxonomy_id' => 'topics', 'created_at' => $today, 'updated_at' => $today],
         ]);
     }
 

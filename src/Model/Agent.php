@@ -11,16 +11,19 @@ class Agent extends Model implements Actor, Relationable
 {
     protected $table = 'agents';
     protected $visible = [
-        'id', 'display_name', 'avatar_hash', 'score', 'banned', 'locale',
-        'extra_fields', 'pictures', 'roles_list', 'pivot',
-        'agent_type_id', 'roles', 'person', 'place', 'accounts'
+        'id', 'display_name', 'description', 'avatar', 'score', 'banned', 'locale',
+        'extra_fields', 'pictures',
+        'roles_list', 'pivot',
+        'agent_type_id', 'roles', 'person', 'place', 'accounts',
     ];
     protected $fillable = [
-        'display_name', 'avatar_hash', 'locale', 'agent_type_id'
+        'display_name', 'description', 'avatar', 'locale',
+        'extra_fields', 'hidden_fields', 'agent_type_id',
     ];
     protected $casts = [
         'banned' => 'boolean',
         'extra_fields' => 'array',
+        'hidden_fields' => 'array',
         'pictures' => 'array',
     ];
 
@@ -34,16 +37,9 @@ class Agent extends Model implements Actor, Relationable
         return $this->belongsTo('App\Model\Place');
     }
 
-    public function groups()
-    {
-        return $this->belongsToMany(
-            'App\Model\Group', 'agent_group', 'agent_id', 'group_id'
-        )->withPivot('relation', 'title');
-    }
-
     public function roles()
     {
-        return $this->belongsToMany('App\Model\Role', 'subject_role');
+        return $this->belongsToMany('App\Model\Role', 'agent_role');
     }
 
     public function setDisplayNameAttribute($value)
@@ -62,8 +58,8 @@ class Agent extends Model implements Actor, Relationable
         return $this->rolesList();
     }
 
-    public function relationsWith(SubjectInterface $subject)
+    public function relationsWith(Actor $other)
     {
-        return (isset($this->id) && $this->id == $subject->id) ? ['self'] : [];
+        return (isset($this->id) && $this->id == $other->id) ? ['self'] : [];
     }
 }
