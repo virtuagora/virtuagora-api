@@ -18,14 +18,10 @@
         "illuminate/database": "^5.8",
         "illuminate/mail": "^5.8",
         "grimzy/laravel-mysql-spatial": "^2.1",
-        "astrotomic/laravel-translatable": "^11.7",
         "firebase/php-jwt": "^5.0",
         "guzzlehttp/guzzle": "^6.2",
         "google/recaptcha": "^1.2",
         "opis/json-schema": "^1.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^7.5"
     },
     "config": {
         "process-timeout": 0,

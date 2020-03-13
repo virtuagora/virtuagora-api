@@ -30,7 +30,7 @@ abstract class AbstractApiGate
      */
     protected function respondWithJson(
         Response $response,
-        JsonSerializable $payload = [],
+        ?JsonSerializable $payload = null,
         int $status = 200
     ): Response {
         $json = json_encode($payload, JSON_PRETTY_PRINT);
@@ -50,10 +50,10 @@ abstract class AbstractApiGate
     protected function respondWithError(
         Response $response,
         string $error,
-        JsonSerializable $payload = [],
+        ?JsonSerializable $payload = null,
         int $status = 400
     ): Response {
-        $payload['error'] = $error;
+        $payload = $payload ?? [];
         $json = json_encode($payload, JSON_PRETTY_PRINT);
         $response->getBody()->write($json);
         return $response
@@ -104,7 +104,7 @@ abstract class AbstractApiGate
     protected function sendEntityResponse(
         Request $request,
         Response $response,
-        EntityData $entity,
+        EntityData $entity
     ): Response {
         if ($entity->getState() != 'success') {
             return $this->respondWithError(
