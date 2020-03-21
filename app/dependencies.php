@@ -8,6 +8,13 @@ use Monolog\Processor\UidProcessor;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
+use Illuminate\Container\Container as IlluminateContainer;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Connectors\ConnectionFactory;
+use Illuminate\Database\ConnectionResolver;
+use Illuminate\Database\Eloquent\Model as Eloquent;
+
+
 return function (ContainerBuilder $containerBuilder) {
     $containerBuilder->addDefinitions([
         LoggerInterface::class => function (ContainerInterface $c) {
@@ -23,6 +30,21 @@ return function (ContainerBuilder $containerBuilder) {
             $logger->pushHandler($handler);
 
             return $logger;
+        },
+        // Database connection
+        Connection::class => function (ContainerInterface $c) {
+            $settings = $c->get('settings');
+            $factory = new ConnectionFactory(new IlluminateContainer());
+            $connection = $factory->make(settings['db']);
+            $connection->disableQueryLog();
+            $resolver = new ConnectionResolver();
+            $resolver->addConnection('default', $connection);
+            $resolver->setDefaultConnection('default');
+            Eloquent::setConnectionResolver($resolver);
+            return $connection;
+        },
+        PDO::class => function (ContainerInterface $c) {
+            return $c->get(Connection::class)->getPdo();
         },
     ]);
 };

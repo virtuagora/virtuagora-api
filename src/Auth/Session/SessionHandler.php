@@ -10,7 +10,7 @@ interface SessionHandler
 {
     public function authenticate(Request $request): Actor;
 
-    public function signIn(Request $request, Actor $subject): Response; // response??
+    public function signIn(Response $response, Actor $subject): Response;
 
-    public function signOut();
+    public function signOut(Request $request, Response $response): Response;
 }

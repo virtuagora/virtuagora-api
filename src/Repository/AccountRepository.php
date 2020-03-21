@@ -7,14 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use App\Util\Paginator;
 
-use App\Service\DatabaseService;
+use Illuminate\Database\Connection;
+use App\Model\Account;
+
 use Psr\Log\LoggerInterface;
 use App\Auth\Requester;
 
 class AccountRepository
 {
     /**
-     * @var DatabaseService
+     * @var Connection
      */
     private $db;
 
@@ -24,10 +26,10 @@ class AccountRepository
     private $logger;
 
     /**
-     * @param DatabaseService $db
+     * @param Connection $db
      * @param LoggerInterface $logger
      */
-    public function __construct(DatabaseService $db, LoggerInterface $logger)
+    public function __construct(Connection $db, LoggerInterface $logger)
     {
         $this->db = $db;
         $this->logger = $logger;
@@ -39,7 +41,7 @@ class AccountRepository
         string $password
     ): EntityData {
         $response = new EntityData('success');
-        $account = $this->db->query('App:Acount', ['agent'])
+        $account = Account::with('agent')
             ->where('account_type_id', 'local')
             ->where('username', $username)
             ->first();

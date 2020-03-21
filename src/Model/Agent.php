@@ -27,6 +27,11 @@ class Agent extends Model implements Actor, Relationable
         'pictures' => 'array',
     ];
 
+    public function accounts()
+    {
+        return $this->hasMany('App\Model\Account');
+    }
+
     public function person()
     {
         return $this->belongsTo('App\Model\Person');
